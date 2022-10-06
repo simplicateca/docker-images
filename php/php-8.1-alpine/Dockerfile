@@ -29,7 +29,6 @@ RUN set -eux; \
         fcgi \
         freetype-dev \
         gettext-dev \
-        gnu-libiconv \
         icu-dev \
         imagemagick \
         imagemagick-dev \
@@ -44,18 +43,26 @@ RUN set -eux; \
         libzip-dev \
         oniguruma-dev \
         unzip \
+        su-exec \
+        gifsicle \
+        jpegoptim \
+        libwebp-tools \
+        nano \
+        optipng \
+        mysql-client \        
     && \
     # pecl PHP extensions
     pecl install \
         redis \
+        imagick \
     && \
     # install imagick
     # use github version for now until release from https://pecl.php.net/get/imagick is ready for PHP 8
     # ref: https://github.com/Imagick/imagick/issues/358
-    mkdir -p /usr/src/php/ext/imagick \
-    && \
-    curl -fsSL https://github.com/Imagick/imagick/archive/06116aa24b76edaf6b1693198f79e6c295eda8a9.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1 \
-    && \
+    #mkdir -p /usr/src/php/ext/imagick \
+    #&& \
+    #curl -fsSL https://github.com/Imagick/imagick/archive/06116aa24b76edaf6b1693198f79e6c295eda8a9.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1 \
+    #&& \
     # Configure PHP extensions
     docker-php-ext-configure \
         # ref: https://github.com/docker-library/php/issues/920#issuecomment-562864296
@@ -69,9 +76,7 @@ RUN set -eux; \
         ftp \
         gettext \
         gd \
-        iconv \
         intl \
-        imagick \
         mbstring \
         opcache \
         pdo \
@@ -81,20 +86,32 @@ RUN set -eux; \
         sysvsem \
         sysvshm \
         zip \
+        pdo_mysql \
     && \
     # Enable PHP extensions
     docker-php-ext-enable \
         imagick \
         redis \
     && \
+    # Install Composer
+    curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin/ --filename=composer \
+    && \
     # Remove the build deps
     apk del .build-deps \
     && \
     # Clean out directories that don't need to be part of the image
-    rm -rf /tmp/* /var/tmp/*
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # https://github.com/docker-library/php/issues/1121
-ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
+#ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
+
+# Install language pack
+RUN apk --no-cache add ca-certificates wget && \
+    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
+    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-2.25-r0.apk && \
+    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-bin-2.25-r0.apk && \
+    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-i18n-2.25-r0.apk && \
+    apk add glibc-bin-2.25-r0.apk glibc-i18n-2.25-r0.apk glibc-2.25-r0.apk
 
 # Copy the `zzz-docker-php.ini` file into place for php
 COPY zzz-docker-php.ini /usr/local/etc/php/conf.d/

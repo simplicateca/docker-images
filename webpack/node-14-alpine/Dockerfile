@@ -1,7 +1,7 @@
-FROM node:12-alpine
+FROM node:14-alpine
 
 # Install packages for headless chrome
-RUN apk update \ 
+RUN apk update \
     && \
     apk add --no-cache nmap \
     && \
@@ -51,18 +51,3 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ENV CHROME_BIN /usr/bin/chromium-browser
 ENV LIGHTHOUSE_CHROMIUM_PATH /usr/bin/chromium-browser
-
-WORKDIR /var/www/project/buildchain/
-
-# Run our webpack build in debug mode
-
-# We'd normally use `npm ci` here, but by using `install`:
-# - If `package-lock.json` is present, it will install what is in the lock file
-# - If `package-lock.json` is missing, it will update to the latest dependencies
-#   and create the `package-lock-json` file
-# This automatic running adds to the startup overhead of `docker-compose up`
-# but saves far more time in not having to deal with out of sync versions
-# when working with teams or multiple environments
-CMD npm install \
-    && \
-    npm run debug
