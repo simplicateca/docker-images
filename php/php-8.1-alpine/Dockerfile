@@ -30,6 +30,7 @@ RUN set -eux; \
         freetype-dev \
         gettext-dev \
         icu-dev \
+        icu-data-full \
         imagemagick \
         imagemagick-dev \
         libjpeg-turbo-dev \
@@ -105,13 +106,17 @@ RUN set -eux; \
 # https://github.com/docker-library/php/issues/1121
 #ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
 
-# Install language pack
-RUN apk --no-cache add ca-certificates wget && \
-    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
-    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-2.25-r0.apk && \
-    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-bin-2.25-r0.apk && \
-    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-i18n-2.25-r0.apk && \
-    apk add glibc-bin-2.25-r0.apk glibc-i18n-2.25-r0.apk glibc-2.25-r0.apk
+# install languages
+ENV MUSL_LOCALE_DEPS cmake make musl-dev gcc gettext-dev libintl 
+ENV MUSL_LOCPATH /usr/share/i18n/locales/musl
+
+RUN apk add --no-cache \
+    $MUSL_LOCALE_DEPS \
+    && wget https://gitlab.com/rilian-la-te/musl-locales/-/archive/master/musl-locales-master.zip \
+    && unzip musl-locales-master.zip \
+      && cd musl-locales-master \
+      && cmake -DLOCALE_PROFILE=OFF -D CMAKE_INSTALL_PREFIX:PATH=/usr . && make && make install \
+      && cd .. && rm -r musl-locales-master
 
 # Copy the `zzz-docker-php.ini` file into place for php
 COPY zzz-docker-php.ini /usr/local/etc/php/conf.d/
