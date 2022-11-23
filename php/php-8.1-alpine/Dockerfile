@@ -82,6 +82,7 @@ RUN set -eux; \
         opcache \
         pdo \
         shmop \
+        soap \
         sockets \
         sysvmsg \
         sysvsem \
